@@ -1,0 +1,9 @@
+to run the rabbitMQ testing program:
+
+- Run an instance of rabbitMQ using Docker, local install, ...
+
+- on one terminal: go run consumer.go
+- on another terminal: go run producer.go
+
+-h to know the available options
+

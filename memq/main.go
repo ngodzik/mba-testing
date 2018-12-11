@@ -1,0 +1,156 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+
+	mbamemqdriver "github.com/ngodzik/mba-memq-driver"
+
+	"github.com/ngodzik/ann"
+)
+
+func main() {
+	var ocNb int
+	var producersNb int
+	var consumersNb int
+	var seed int64
+
+	flag.IntVar(&ocNb, "n", 10, "Sets the number of artificial neural network output computations to be carried out")
+	flag.IntVar(&producersNb, "p", 1, "Sets the number of workers producing the inputs")
+	flag.IntVar(&consumersNb, "c", 1, "Sets the number of workers producing inputs created")
+	flag.Int64Var(&seed, "s", 1, "Sets the seed, -1 or less to set it randomly")
+
+	flag.Parse()
+
+	fmt.Printf("computations number: %d, producers number: %d, consumers number: %d\n", ocNb, producersNb, consumersNb)
+
+	if seed < 0 {
+		seed = time.Now().UTC().UnixNano()
+	}
+
+	rand.Seed(seed)
+
+	// Create the message broker
+
+	mb, err := mbamemqdriver.New(10)
+
+	if err != nil {
+		panic("Cannot get a new message broker")
+	}
+
+	var wgInit sync.WaitGroup
+	var wgWorkersP sync.WaitGroup
+	var wgWorkersC sync.WaitGroup
+
+	var weights = []float64{3.5160783381534, -2.3902606289939228, -2.152499363027632, -0.44337151167720706, 0.8226541103099444, 1.3815329145786182, -3.1576281267909936, 2.5953330762507685, 2.507073266690611, -0.42406179772926317, 7.034165236533734, 7.12978520484844, 1.5771377222120426, -1.6372547912849365, -1.2843295971430708, 1.9903168150273587, 0.6174440179589991, 0.3523661570477517, -0.18580960820356096, 3.0299735759479782, 3.9564233842157854, 3.1063890495752284, -2.0099199082188473, -2.0746220692452537, -0.8485603830898351, 2.369955359227498, 1.9703330634524605, -0.23030041878550636, 5.468730107547309, 4.9826722016170475, -0.38290485876739677, 4.5802605888328936, -1.4728676268843024, -1.1739826285851052, 0.7803999505636829, 2.3445969472066666, -0.12877183069320763, -0.3147884285846357, 4.277502576560991, -1.6540871699317512, -0.08342774623330282, 0.979031589660323, 0.5283968365743884, 0.6129645397050616, 0.3246731458316136, 1.0216449031074406, 0.73709577568676, 0.5996289644512901, 1.0221253371535453, 0.96334453848726, -0.17486452077675796, 1.0211287273899416, 0.4722572682290521, 0.5071438271991168, 0.2848132326040605, 0.9306072477449046, 0.3654677814118729, 0.3883098897816378, 0.5534429201928504, 0.5281513904841993, 0.4650252089369866, 0.5285142462326272, 0.9687046818088801, 0.3329887013876316, 0.6123883375671277, 0.6653059624899901, 0.056775901937989266, -0.5070915113372062, 0.41764189377619493, 0.9457160980110482, 1.026538667561677, 0.2413284029994347, 0.7166310247208241, 0.9312050418421477, -1.381495371784787, -2.3396058330862712, -0.9583678876611401, 3.1763231112489727, 3.2066877929170507, -0.6872311331596435, -1.437882768086923, 0.8207748631014701, -1.3628625856371075, 0.8864775998903851, 1.9423158108680316, 0.09503890989982132, 1.0771560128729418, 0.08417236608099611, 0.2612490979844103, -2.0063096697762206, 0.35660405580944693, 0.13076430579446002, -0.5939576417921925, 1.4184400024398374, -0.5973608970214346, -1.2200135646157437, -3.1306885528794686, -3.0407854295154295, -0.3456096570380117, 3.289186746860089, 3.567553729947386, -1.4970334070301172, -2.064136239739717, 1.1616144642346458, -2.2821460791867496, 1.360668691644496, 2.216835370904625, -1.949614442429336, -4.144373239220894, 1.1167495771747926, 2.6228846427517896, 7.851674291732568, -2.3567879263200133, -0.2732556875712425, 4.504911488202426, -2.4390090511839166, 3.5984186760268653, 6.354078293779421, 0.4882780993712929, 0.718086961519045, 0.8539833766490899, 1.0213648206931152, 0.26656172468913814, 0.29317770685949357, 0.38545955516212366, 0.5737528195093071, 0.4860356529539186, 1.0798357888413244, 0.3306511936740563, -0.05209385407856222, 1.2311256975313976, -0.03212386709803537, 0.6017706326068579, -1.1795865708784363, 0.9629075459960276, -0.3317597920353095, -0.7173298918713045, 0.41206761798006236, -0.011563657200322227, -1.0161462808688835, 0.3630476344776482, -5.430392283504762, 0.39362435665901757, 0.41479239891142416, 0.49009265546331743, -3.6387222357411946, -3.201701943723665, -5.733909625212192, 8.592405909560444, 0.6321811110878321, -2.564430919607553, -0.4882323455908467, -3.6561375215132026, -0.28115762657894455, -0.8466990984649541, 0.14253280944433977, -11.940514676699776, 1.0495944192106859, 8.424766152650127, 8.872838799301228, 0.013816785109645428, 0.2991229872750763}
+
+	type neurons struct {
+		values [2]float64
+	}
+
+	// Create consumers
+	for i := 0; i < consumersNb; i++ {
+		wgInit.Add(1)
+		wgWorkersC.Add(1)
+		go func(id int) {
+			defer wgWorkersC.Done()
+
+			goID := id
+
+			nn := ann.NewPerceptron(2, 10, 10, 2)
+
+			nn.MustSetWeights(weights)
+
+			sc, err := mb.NewSubscriber()
+
+			if err != nil {
+				panic("Cannot get a new subscriber")
+			}
+
+			mb.SetTopic(sc, "ann", func(msg interface{}) error {
+				i := msg.(neurons)
+
+				o := nn.Compute(i.values[:2])
+
+				fmt.Printf("worker_c %d, output computed: %v\n", id, o)
+
+				return nil
+			})
+
+			// Initialization done
+			wgInit.Done()
+
+		Working:
+			for {
+				// We are in the blocking case, so it is not necessary to look if there is an incoming message.
+				// TODO process the error
+
+				ok, err := sc.Receive()
+
+				if err != nil {
+					panic("An error happened on the message reception")
+				}
+
+				if ok == false {
+					// No more message will be received
+					break Working
+				}
+			}
+			fmt.Printf("Consumer: %d, end of goroutine\n", goID)
+		}(i)
+	}
+
+	// Create producers
+	for i := 0; i < producersNb; i++ {
+		//wgEnd.Add(1)
+		wgInit.Add(1)
+		wgWorkersP.Add(1)
+		go func(id int) {
+
+			defer wgWorkersP.Done()
+
+			pb, err := mb.NewPublisher("ann")
+
+			if err != nil {
+				panic("Cannot get a new publisher")
+			}
+
+			defer pb.Close()
+
+			goID := id
+
+			// Initialization done
+			wgInit.Done()
+
+		Working:
+			for li := 0; li < ocNb; li++ {
+				ns := neurons{}
+
+				ns.values[0] = rand.Float64()
+				ns.values[1] = rand.Float64()
+
+				err := pb.Send(ns)
+				if err != nil {
+					break Working
+				}
+
+			}
+			fmt.Printf("Producer: %d, end of goroutine\n", goID)
+		}(i)
+	}
+
+	// Wait for all goroutines to be initialized
+	wgInit.Wait()
+
+	// Initialization complete
+	// Start the message broker
+	mb.Start()
+
+	wgWorkersP.Wait()
+
+	wgWorkersC.Wait()
+
+}

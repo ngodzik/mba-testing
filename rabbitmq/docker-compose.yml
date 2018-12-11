@@ -1,0 +1,10 @@
+---
+version: '2'
+
+services:
+  go:
+    image: rabbitmq:3
+    container_name: rabbitmq-container
+    ports:
+            - 5672:5672
+
